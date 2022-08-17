@@ -1,7 +1,6 @@
 - [ ] Tests written and linted [ℹ︎](https://github.com/snyk/general/wiki/Tests)
 - [ ] Documentation written [ℹ︎](https://github.com/snyk/general/wiki/Documentation)
 - [ ] Commit history is tidy [ℹ︎](https://github.com/snyk/general/wiki/Git)
-- [ ] New external endpoints are exposed in the Ingress service [ℹ︎](https://github.com/snyk/ops/blob/master/dev/ingress/general.json)
 
 ### What this does
 
@@ -14,7 +13,6 @@ _Instructions on how to run this locally, background context, what to review, qu
 ### More information
 
 - [Jira ticket SC-0000](https://snyksec.atlassian.net/browse/SC-0000)
-- [Link to documentation](https://github.com/Snyk/registry/wiki/)
 
 ### Screenshots
 
