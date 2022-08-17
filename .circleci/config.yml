@@ -1,0 +1,173 @@
+version: 2.1
+
+private_cicd_repo_auth: &private_cicd_repo_auth
+  auth:
+    username: _json_key
+    password: $GCLOUD_GCR_BUILDER
+metadata: &metadata
+  resource_class: small
+  working_directory: ~/<project name>
+defaults: &defaults
+    <<: *metadata
+    docker:
+      - image: gcr.io/snyk-main/nsolid-ubuntu-lite:fermium-20
+        <<: *private_cicd_repo_auth
+ci_cd_image: &ci_cd_image
+  <<: *metadata
+  docker:
+    - image: gcr.io/snyk-main/deployer-cicd
+      <<: *private_cicd_repo_auth
+commands:
+  gcr_auth:
+    description: Auth GCR
+    steps:
+      - setup_remote_docker
+      - run:
+          name: GCR auth
+          command: echo $GCLOUD_GCR_BUILDER | docker login -u _json_key --password-stdin https://gcr.io/snyk-main
+  notify_slack_on_failure:
+    steps:
+      - run:
+          name: Notify Slack on failure
+          command: |
+            if [[ "$CIRCLE_BRANCH" == "main" || "$CIRCLE_BRANCH" == "develop" ]]; then
+              ./.circleci/slack-notify-failure.sh "${CIRCLE_JOB}"
+            fi
+          when: on_fail
+# Define the jobs we want to run for this project
+jobs:
+  lint:
+    docker:
+      - image: cimg/go:1.17
+    steps:
+      - checkout
+      - run:
+          name: run lint check
+          command: make lint
+      - notify_slack_on_failure
+  unit_test:
+    docker:
+      - image: cimg/go:1.17
+    steps:
+      - checkout
+      - run:
+          name: run unit tests
+          command: make test
+      - notify_slack_on_failure
+  build:
+    docker:
+      - image: cimg/go:1.17
+    steps:
+      - checkout
+      - run:
+          name: build go app
+          command: make build
+      - notify_slack_on_failure
+  publish:
+    docker:
+      - image: cimg/go:1.17
+    steps:
+      - checkout
+      - gcr_auth
+      - run:
+          name: build docker file and publish to gcr
+          command: make build_docker
+      - run:
+          name: Notify Slack on success
+          command: ./.circleci/slack-notify-success.sh "Publish Image"
+      - notify_slack_on_failure
+  deploy:
+    <<: *ci_cd_image
+    description: Deploy service to <<parameters.env>>
+    parameters:
+      env:
+        type: string
+    steps:
+      - checkout
+      - gcr_auth
+      - run:
+          command: docker_release_tag
+          environment:
+            DEPLOY_ENV: <<parameters.env>>
+      - run:
+          name: Deploy to <<parameters.env>>
+          command: deploy
+          environment:
+            DEPLOY_ENV: <<parameters.env>>
+      - notify_slack_on_failure
+  release:
+    <<: *defaults
+    description: Release
+    steps:
+      - checkout
+      - run:
+          name: Install curl and git
+          command: apt update && apt install -y curl git
+      - run:
+          name: Release on GitHub
+          command: npx semantic-release
+      - notify_slack_on_failure
+
+# Orchestrate our job run sequence
+workflows:
+  version: 2
+  test_and_release:
+    jobs:
+      - lint:
+          name: Lint
+          filters:
+            branches:
+              ignore:
+                - main
+      - unit_test:
+          name: Unit tests
+          filters:
+            branches:
+              ignore:
+                - main
+      - build:
+          name: Build
+          requires:
+            - Lint
+            - Unit tests
+          filters:
+            branches:
+              ignore:
+                - main
+      - publish:
+          name: Publish image
+          context: snyk-docker-build
+          requires:
+            - Build
+          filters:
+            branches:
+              only:
+                - develop
+      - deploy:
+          name: Deploy DEV
+          context: snyk-docker-build
+          env: dev
+          requires:
+            - Publish image
+          filters:
+            branches:
+              only:
+                - develop
+      - deploy:
+          name: Deploy PROD
+          context: snyk-docker-build
+          env: prod
+          filters:
+            branches:
+              only:
+                - main
+      - release:
+          name: Release to GitHub
+          context: nodejs-app-release
+          requires:
+            - Deploy PROD
+          filters:
+            branches:
+              only:
+                - main
+
