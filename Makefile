@@ -5,21 +5,26 @@ GOMOD=$(GOCMD) mod
 GOBUILD=$(GOCMD) build
 GOTEST=$(GOCMD) test
 
+example1: ./cmd/example1/main.go 
+	@$(GOBUILD) -o example1 ./cmd/example1/main.go 
+
+build-examples: example1
+
 all:
 	$(info  "completed running make file for golang project")
 fmt:
-	@go fmt ./...
+	@$(GOCMD) fmt ./...
 lint:
 	./script/lint.sh
 tidy:
 	$(GOMOD) tidy -v
 test:
-	$(GOTEST) ./... -coverprofile cp.out
-build:
-	$(GOBUILD) -v
+	@$(GOTEST) ./... -coverprofile cp.out
+build: build-examples
+	@$(GOBUILD) -v ./...
+clean:
+	@$(GOCMD) clean
+	@$(GOCMD) clean -testcache
+	@rm -f example1
 
-build_docker:
-	docker build -t gcr.io/snyk-main/<service name>:${CIRCLE_SHA1} .
-	docker push gcr.io/snyk-main/<service name>:${CIRCLE_SHA1}
-
-.PHONY: install-req fmt test lint build tidy imports
+.PHONY: fmt test lint build tidy build-examples clean

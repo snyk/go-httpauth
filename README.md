@@ -1,28 +1,15 @@
-# go-template
+# go-httpauth
 
-The go-template is a template repo for golang project. it provides basic golang project structure and files
-for quick kickstart of golang project.
+## Overview
+This library introduces "advanced" HTTP Authentication mechanisms to be used in the golang HTTP stack (http.Transport). Current focus is on Proxy Authentication but future use is not limited to it.
 
-## usage
+The implementation supports automatic mechanism detection with `httpauth.AnyAuth`
 
-<br><img src="usage.png" width="800" alt="template usage plot"><br>
+Currently supported authentication mechanism: 
+- Negotiate (see https://www.ietf.org/rfc/rfc4559.txt)
+    - Kerberos (on all OS)
+    - NTLM (on Windows)
 
-## Dependency management
-```
-go mod init github.com/snyk/<project name>
-go mod tidy
-```
-
-## Content
-- folders layout 
-- basic make file
-- linter with configuration
-- docker file 
-- circle-ci config file
-- test helper
-- release config file
-
-
-
-
-Note : Not all folders must use , one can be deleted if not needed 
+## Usage
+### Proxy Authentication
+See `cmd/example1/main.go` 
