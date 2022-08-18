@@ -6,6 +6,7 @@ statics
 .history
 client/node_modules
 .DS_Store
+.dccache
 lint.xml
 cp.out
 vendor/
@@ -16,5 +17,4 @@ fmtcoverage.html
 coverage.md
 coverage.out
 kube-knark
-mock*
 *.iml
