@@ -6,11 +6,13 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/snyk/go-httpauth/test/helper"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/http/httpproxy"
 )
 
 //go:generate $GOPATH/bin/mockgen -source=authenticationhandler.go -destination ./httpauth_generated_mock.go -package httpauth -self_package github.com/snyk/go-httpauth/pkg/httpauth
@@ -477,6 +479,24 @@ func Test_ProxyAuthenticator_DialContext_success03(t *testing.T) {
 	var proxyFunc func(*http.Request) (*url.URL, error) // no proxy configured should just return the tcp connection
 
 	helper_DialContext(t, true, nil, mechanism, proxyFunc, target)
+}
+
+// Test case: AnyAuth enabled, NO_PROXY specified so that the request will not go through a proxy
+func Test_ProxyAuthenticator_DialContext_success03_1(t *testing.T) {
+	mechanism := AnyAuth
+	target := "snyk.io:443"
+
+	os.Setenv("HTTPS_PROXY", "http://localhost:3128")
+	os.Setenv("HTTP_PROXY", "http://localhost:3128")
+	os.Setenv("NO_PROXY", "localhost,snyk.io")
+
+	proxyFunc := func(r *http.Request) (*url.URL, error) { return httpproxy.FromEnvironment().ProxyFunc()(r.URL) }
+
+	helper_DialContext(t, true, nil, mechanism, proxyFunc, target)
+
+	os.Unsetenv("HTTPS_PROXY")
+	os.Unsetenv("HTTP_PROXY")
+	os.Unsetenv("NO_PROXY")
 }
 
 // Test case: AnyAuth enabled, proxy address specified, proxy doesn't require authentication (using spnego provider mock)
