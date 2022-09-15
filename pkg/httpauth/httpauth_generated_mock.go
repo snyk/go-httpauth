@@ -88,6 +88,20 @@ func (mr *MockAuthenticationHandlerInterfaceMockRecorder) IsStopped() *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsStopped", reflect.TypeOf((*MockAuthenticationHandlerInterface)(nil).IsStopped))
 }
 
+// SetBasicAuthentication mocks base method.
+func (m *MockAuthenticationHandlerInterface) SetBasicAuthentication(userInfo *url.Userinfo) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetBasicAuthentication", userInfo)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetBasicAuthentication indicates an expected call of SetBasicAuthentication.
+func (mr *MockAuthenticationHandlerInterfaceMockRecorder) SetBasicAuthentication(userInfo interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetBasicAuthentication", reflect.TypeOf((*MockAuthenticationHandlerInterface)(nil).SetBasicAuthentication), userInfo)
+}
+
 // SetLogger mocks base method.
 func (m *MockAuthenticationHandlerInterface) SetLogger(logger *log.Logger) {
 	m.ctrl.T.Helper()

@@ -445,7 +445,7 @@ func Test_ProxyAuthenticator_DialContext_success02(t *testing.T) {
 	mockServer.ResponseList = append(mockServer.ResponseList, &http.Response{StatusCode: 200})
 
 	mechanism := AnyAuth
-	proxyUrl, _ := url.Parse("http://localhost:" + fmt.Sprint(mockServer.Port))
+	proxyUrl, _ := url.Parse("http://user@localhost:" + fmt.Sprint(mockServer.Port))
 	target := "snyk.io:443"
 	proxyFunc := func(*http.Request) (*url.URL, error) { return proxyUrl, nil }
 
@@ -530,4 +530,53 @@ func Test_ProxyAuthenticator_DialContext_success04(t *testing.T) {
 	// check expectations
 	assert.Nil(t, err)
 	assert.NotNil(t, connection)
+}
+
+// Test case: AnyAuth enabled, proxy address specified and contains userInfo, doing 1 message authentication including basic authentication
+func Test_ProxyAuthenticator_DialContext_success_basicAuth(t *testing.T) {
+	mockServer, _ := createMockServer()
+
+	// prepare test data
+	mockServer.ResponseList = append(mockServer.ResponseList, &http.Response{StatusCode: 200})
+
+	mechanism := Negotiate
+	proxyUrl, _ := url.Parse("http://user:password@localhost:" + fmt.Sprint(mockServer.Port))
+	target := "snyk.io:443"
+	proxyFunc := func(*http.Request) (*url.URL, error) { return proxyUrl, nil }
+
+	// prepare test environment
+	authenticator := NewProxyAuthenticator(mechanism, proxyFunc, testLogger)
+
+	// run method under test
+	connection, err := authenticator.DialContext(context.Background(), "tcp", target)
+
+	// check expectations
+	assert.Nil(t, err)
+	assert.NotNil(t, connection)
+	assert.NotEmpty(t, mockServer.RequestList)
+	authorizationValue := mockServer.RequestList[0].Header[ProxyAuthorizationKey][0]
+	assert.Equal(t, "Basic dXNlcjpwYXNzd29yZA==", authorizationValue)
+}
+
+// Test case: AnyAuth enabled, proxy address specified and contains userInfo, doing 1 message authentication including basic authentication
+func Test_ProxyAuthenticator_DialContext_fail_basicAuth(t *testing.T) {
+	mockServer, _ := createMockServer()
+
+	// prepare test data
+	mockServer.ResponseList = append(mockServer.ResponseList, &http.Response{StatusCode: 407})
+
+	mechanism := Negotiate
+	proxyUrl, _ := url.Parse("http://user:password@localhost:" + fmt.Sprint(mockServer.Port))
+	target := "snyk.io:443"
+	proxyFunc := func(*http.Request) (*url.URL, error) { return proxyUrl, nil }
+
+	// prepare test environment
+	authenticator := NewProxyAuthenticator(mechanism, proxyFunc, testLogger)
+
+	// run method under test
+	connection, err := authenticator.DialContext(context.Background(), "tcp", target)
+
+	// check expectations
+	assert.NotNil(t, err)
+	assert.Nil(t, connection)
 }

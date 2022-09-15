@@ -13,6 +13,7 @@ const (
 	NoAuth           AuthenticationMechanism = "noauth"
 	Negotiate        AuthenticationMechanism = "negotiate"
 	AnyAuth          AuthenticationMechanism = "anyauth"
+	BasicAuth        AuthenticationMechanism = "basic"
 	UnknownMechanism AuthenticationMechanism = "unknownmechanism"
 )
 
