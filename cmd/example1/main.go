@@ -54,6 +54,10 @@ func main() {
 		fmt.Println("--> Run with proxy on localhost")
 		runTest(func(req *http.Request) (*url.URL, error) { return url.Parse("http://localhost:3128") })
 
+		// this case uses basic authentication
+		fmt.Println("--> Run with basic proxy authentication from url ")
+		runTest(func(req *http.Request) (*url.URL, error) { return url.Parse("http://user:password@localhost:3128") })
+
 		env.StopProxyEnvironment()
 	}
 }

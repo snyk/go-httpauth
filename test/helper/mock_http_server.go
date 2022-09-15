@@ -9,6 +9,7 @@ import (
 type MockServer struct {
 	Port          int
 	ResponseList  []*http.Response
+	RequestList   []*http.Request
 	responseIndex int
 	listener      net.Listener
 }
@@ -33,6 +34,8 @@ func (m *MockServer) Listen() {
 
 func (m *MockServer) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	var response *http.Response
+
+	m.RequestList = append(m.RequestList, request)
 
 	if m.responseIndex < len(m.ResponseList) {
 		response = m.ResponseList[m.responseIndex]

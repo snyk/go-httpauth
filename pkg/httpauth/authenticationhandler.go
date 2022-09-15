@@ -1,6 +1,7 @@
 package httpauth
 
 import (
+	"encoding/base64"
 	"fmt"
 	"io"
 	"log"
@@ -14,6 +15,7 @@ type AuthenticationHandlerInterface interface {
 	IsStopped() bool
 	GetAuthorizationValue(url *url.URL, responseToken string) (string, error)
 	Update(availableMechanism map[AuthenticationMechanism]string) (string, error)
+	SetBasicAuthentication(userInfo *url.Userinfo) error
 	SetLogger(logger *log.Logger)
 	SetSpnegoProvider(spnegoProvider SpnegoProvider)
 }
@@ -25,6 +27,7 @@ type AuthenticationHandler struct {
 	state           AuthenticationState
 	cycleCount      int
 	logger          *log.Logger
+	userInfo        *url.Userinfo
 }
 
 func NewHandler(mechanism AuthenticationMechanism) AuthenticationHandlerInterface {
@@ -45,10 +48,23 @@ func (a *AuthenticationHandler) Close() {
 }
 
 func (a *AuthenticationHandler) GetAuthorizationValue(url *url.URL, responseToken string) (authorizeValue string, err error) {
-	mechanism := StringFromAuthenticationMechanism(a.activeMechanism)
+	var token string
 
+	if url.User != nil {
+		// As soon as a user and password are given inside the URL, we assume that basic authentication is being required.
+		err = a.SetBasicAuthentication(url.User)
+		if err != nil {
+			a.logger.Println(err)
+
+			// in case of anyauth, supress the error to try other authentication mechanisms
+			if a.activeMechanism == AnyAuth {
+				err = nil
+			}
+		}
+	}
+
+	mechanism := StringFromAuthenticationMechanism(a.activeMechanism)
 	if a.activeMechanism == Negotiate { // supporting mechanism: Negotiate (SPNEGO)
-		var token string
 		var done bool
 
 		if len(responseToken) == 0 && Negotiating == a.state {
@@ -74,6 +90,13 @@ func (a *AuthenticationHandler) GetAuthorizationValue(url *url.URL, responseToke
 			mechanisms, _ := GetMechanismsFromHttpFieldValue(authorizeValue)
 			a.logger.Printf("Authorization to %s using: %s", url, mechanisms)
 		}
+	} else if a.activeMechanism == BasicAuth { // supporting mechanism: Basic
+		password, _ := a.userInfo.Password()
+		userPass := fmt.Sprintf("%s:%s", a.userInfo.Username(), password)
+		token = base64.StdEncoding.EncodeToString([]byte(userPass))
+		authorizeValue = mechanism + " " + token
+
+		a.logger.Printf("Authorization to %s using: [%s]", url, mechanism)
 	}
 
 	a.cycleCount++
@@ -104,6 +127,16 @@ func (a *AuthenticationHandler) Update(availableMechanism map[AuthenticationMech
 	}
 
 	return responseToken, err
+}
+
+func (a *AuthenticationHandler) SetBasicAuthentication(userInfo *url.Userinfo) error {
+	if _, hasPassword := userInfo.Password(); hasPassword {
+		a.userInfo = userInfo
+		a.activeMechanism = BasicAuth
+		return nil
+	} else {
+		return fmt.Errorf("Failed to set basic authentication, missing password")
+	}
 }
 
 func (a *AuthenticationHandler) IsStopped() bool {
