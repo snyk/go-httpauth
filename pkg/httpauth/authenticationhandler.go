@@ -87,8 +87,8 @@ func (a *AuthenticationHandler) GetAuthorizationValue(url *url.URL, responseToke
 		authorizeValue = mechanism + " " + token
 
 		if len(token) > 0 {
-			mechanisms, _ := GetMechanismsFromHttpFieldValue(authorizeValue)
-			a.logger.Printf("Authorization to %s using: %s", url, mechanisms)
+			mechanisms, errMechanism := GetMechanismsFromHttpFieldValue(authorizeValue)
+			a.logger.Printf("Authorization to %s using: %s (err=%v)", url, mechanisms, errMechanism)
 		}
 	} else if a.activeMechanism == BasicAuth { // supporting mechanism: Basic
 		password, _ := a.userInfo.Password()
