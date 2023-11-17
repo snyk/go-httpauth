@@ -62,7 +62,7 @@ func (p *ProxyAuthenticator) DialContext(ctx context.Context, network, addr stri
 		connection, err = p.connectToProxy(ctx, proxyUrl, addr, createConnectionFunc)
 
 		if err != nil {
-			fmt.Println("Failed to connect to Proxy! ", proxyUrl)
+			p.debugLogger.Println("Failed to connect to Proxy! ", proxyUrl)
 		}
 	} else {
 		connection, err = net.Dial(network, addr)

@@ -51,10 +51,6 @@ func GetMechanismsFromHttpFieldValue(token string) ([]string, error) {
 			}
 
 		}
-
-		if err != nil {
-			fmt.Println(err)
-		}
 	}
 
 	return result, err
