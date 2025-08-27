@@ -6,7 +6,7 @@ orbs:
 executors:
   linux:
     machine:
-      image: ubuntu-2004:2022.07.1
+      image: default
 
 # Define the jobs we want to run for this project
 jobs:
