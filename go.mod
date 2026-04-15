@@ -1,6 +1,6 @@
 module github.com/snyk/go-httpauth
 
-go 1.18
+go 1.25
 
 require (
 	github.com/alexbrainman/sspi v0.0.0-20210105120005-909beea2cc74
