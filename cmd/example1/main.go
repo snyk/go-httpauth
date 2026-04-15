@@ -29,7 +29,7 @@ func runTest(proxyConfiguration func(req *http.Request) (*url.URL, error)) {
 	if err != nil {
 		fmt.Println("Failed process request:", err)
 	} else {
-		fmt.Println("Received:", response.StatusCode)
+		fmt.Println("Received: ", response.StatusCode)
 	}
 }
 
