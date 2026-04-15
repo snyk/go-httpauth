@@ -166,6 +166,7 @@ func (p *ProxyAuthenticator) processResponse(authHandler AuthenticationHandlerIn
 	return responseToken, err
 }
 
+// processResponse407 processes the response from the proxy when it returns a 407 status code.
 func (p *ProxyAuthenticator) processResponse407(authHandler AuthenticationHandlerInterface, response *http.Response) (responseToken string, err error) {
 
 	result := response.Header.Values(ProxyAuthenticateKey)
