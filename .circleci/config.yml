@@ -4,13 +4,19 @@ orbs:
   prodsec: snyk/prodsec-orb@1
   go: circleci/go@1.9.0
 
+# single source of truth for the Go version, keep it in sync with go.mod
+parameters:
+  go_version:
+    type: string
+    default: "1.25.12"
+
 executors:
   linux:
     machine:
       image: default
   golang:
     docker:
-      - image: cimg/go:1.25
+      - image: cimg/go:<< pipeline.parameters.go_version >>
 
 # Define the jobs we want to run for this project
 jobs:
@@ -19,7 +25,7 @@ jobs:
     steps:
       - checkout
       - go/install:
-          version: "1.25.12"
+          version: << pipeline.parameters.go_version >>
           cache: true
       - run:
           name: Run unit tests
@@ -37,8 +43,7 @@ jobs:
 
   security-scans:
     resource_class: small
-    docker:
-      - image: cimg/go:1.25
+    executor: golang
     steps:
       - checkout
       - prodsec/security_scans:
