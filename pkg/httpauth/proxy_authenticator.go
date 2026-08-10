@@ -45,7 +45,7 @@ func (p *ProxyAuthenticator) DialContext(ctx context.Context, network, addr stri
 		fakeRequest.URL.Host = addr
 		proxyUrl, err = p.upstreamProxy(fakeRequest)
 		if err != nil {
-			return nil, err
+			return nil, NewProxyConnectionError(proxyUrl, err)
 		}
 	}
 
@@ -63,6 +63,7 @@ func (p *ProxyAuthenticator) DialContext(ctx context.Context, network, addr stri
 
 		if err != nil {
 			p.debugLogger.Println("Failed to connect to Proxy! ", proxyUrl)
+			err = NewProxyConnectionError(proxyUrl, err)
 		}
 	} else {
 		connection, err = net.Dial(network, addr)
