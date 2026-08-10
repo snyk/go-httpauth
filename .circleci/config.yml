@@ -2,11 +2,15 @@ version: 2.1
 
 orbs:
   prodsec: snyk/prodsec-orb@1
+  go: circleci/go@1.9.0
 
 executors:
   linux:
     machine:
       image: default
+  golang:
+    docker:
+      - image: cimg/go:1.25
 
 # Define the jobs we want to run for this project
 jobs:
@@ -14,11 +18,14 @@ jobs:
     executor: linux
     steps:
       - checkout
+      - go/install:
+          version: "1.25.12"
+          cache: true
       - run:
           name: Run unit tests
           command: make test
   build:
-    executor: linux
+    executor: golang
     steps:
       - checkout
       - run:
@@ -31,7 +38,7 @@ jobs:
   security-scans:
     resource_class: small
     docker:
-      - image: cimg/go:1.22
+      - image: cimg/go:1.25
     steps:
       - checkout
       - prodsec/security_scans:
